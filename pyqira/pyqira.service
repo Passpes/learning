@@ -1,0 +1,15 @@
+[Unit]
+Description=Pyqira
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /home/laghao/daemon/pyqira.py start
+User=laghao
+WorkingDirectory=/
+Restart=on-failure
+RestartSec=5s
+PIDFile=/tmp/d1.pid
+
+
+[Install]
+WantedBy=multi-user.target

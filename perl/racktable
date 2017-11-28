@@ -1,0 +1,40 @@
+#!/bin/zsh
+
+set -eu
+
+PATH=/usr/bin:/bin
+
+script_canon="$(readlink -m "$0")"
+absolute_path="$(dirname "$script_canon")"
+pushd "$absolute_path" >/dev/null
+
+ssh racktables 'perl' < <(sed -ne "/^### START/,/^### STOP/p" "${script_canon}")
+
+popd >/dev/null
+
+exit
+
+### START
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use DBI;
+
+my $dbh = DBI->connect("DBI:mysql:database=racktables_db;mysql_read_default_file=$ENV{HOME}/.my.cnf",undef,undef, {'RaiseError' => 0, 'PrintError' => 1});
+
+my $query = "SELECT o.name, INET_NTOA(ip.ip), ip.name FROM Object o, TagStorage ts, IPv4Allocation ip, TagTree tt WHERE ts.tag_id = tt.id AND tt.tag LIKE '%Linux%' AND ts.entity_realm = 'object' AND ip.object_id = o.id AND ts.entity_id = o.id AND ip.name NOT LIKE 'Mana%' AND ip.name NOT LIKE 'MGMT%' AND ip.name NOT LIKE 'Drac%'";
+
+my $sth = $dbh->prepare($query);
+my $rv = $sth->execute() or die "$DBI::errstr";
+
+my $tbl_ary_ref = $sth->fetchall_arrayref;
+
+for my $row (@{$tbl_ary_ref}) {
+        print "\[$$row[0]\]\n";
+        print "$$row[1]\n\n";
+}
+
+$sth->finish();
+$dbh->disconnect;
+### STOP

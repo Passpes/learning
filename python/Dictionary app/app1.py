@@ -7,9 +7,11 @@ i = 1
 def translate(w):
     if w.istitle():
         w = w
+    elif w.upper() in data:
+        return data[w.upper()]    
     else:    
         w = w.lower()
-        
+
     if w in data:
         return data[w]
     elif len (get_close_matches(w,data.keys())) > 0:
